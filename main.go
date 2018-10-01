@@ -9,8 +9,8 @@ func main() {
     testCommand := os.Args[1]
     directory := os.Args[2]
 
+    // Validate that the tests can run successfully
     _, err := runTests(testCommand, directory)
-
     if ( err != nil) {
         fmt.Println("Tests did not pass without deleted lines")
         os.Exit(1)
