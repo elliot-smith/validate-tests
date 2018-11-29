@@ -20,12 +20,32 @@ func main() {
         os.Exit(1)
     }
 
-    dat, err := ioutil.ReadFile(directory + "/" + testFile)
+    filesText, err := readAndBackupFile(directory, testFile)
 
-    fmt.Println(string(dat))
+    fmt.Println(filesText)
 
     fmt.Println("Tests passed")
     fmt.Println(directory + testFile)
+}
+
+func readAndBackupFile(directory string, testFile string) (string, error) {
+    fileNameAndDirectory := directory + "/" + testFile
+    filesText, err := ioutil.ReadFile(fileNameAndDirectory)
+
+    if (err != nil) {
+        fmt.Println("Unable to read the file" + fileNameAndDirectory)
+        return "", fmt.Errorf("Unable to read the file")
+    }
+
+    backupTestFileName := fileNameAndDirectory + ".backup"
+    writeFileErr := ioutil.WriteFile(backupTestFileName, filesText, 0644)
+
+    if (writeFileErr != nil) {
+        fmt.Println("Unable to create the backup file for file" + fileNameAndDirectory)
+        return "", fmt.Errorf("Unable to create the backup file")
+    }
+
+    return string(filesText), nil
 }
 
 func runTests(testCommand string, directory string) (string, error) {
