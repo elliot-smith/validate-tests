@@ -24,6 +24,15 @@ func main() {
 
     fmt.Println(filesText)
 
+
+    err = validateTests(filesText)
+
+    if ( err != nil) {
+        // TODO fix the following error
+        fmt.Println("The following error occurred while trying to validate the tests: ")
+        os.Exit(1)
+    }
+
     fmt.Println("Tests passed")
     fmt.Println(directory + testFile)
 
@@ -53,6 +62,55 @@ func readAndBackupFile(directory string, testFile string) (string, error) {
     }
 
     return string(filesText), nil
+}
+
+func validateTests(filesText string) (error) {
+    err := parseAndValidateTestFile("", filesText)
+
+    if (err != nil) {
+        return err
+    }
+
+    return nil
+}
+
+func parseAndValidateTestFile(parsedText string, remainingText string) (error) {
+    newRemainingText, nextStatement := getNextStatement(remainingText)
+
+    fmt.Println(nextStatement)
+
+    if(newRemainingText != "") {
+        parseAndValidateTestFile(parsedText + nextStatement, newRemainingText)
+    }
+
+    return nil
+}
+
+func getNextStatement (remainingText string) (string, string) {
+    return getNextStatementRecursive(remainingText, "")
+}
+
+func getNextStatementRecursive (remainingText string, nextStatement string) (string, string) {
+    if (remainingText == "") {
+        return remainingText, ""
+    }
+
+    nextCharacter := remainingText[:1]
+
+    if(isTerminatingCharacter(nextCharacter) || nextCharacter == "") {
+        return remainingText[1:], nextStatement + nextCharacter
+    }
+
+    return getNextStatementRecursive(remainingText[1:], nextStatement + nextCharacter)
+}
+
+func isTerminatingCharacter (character string) (bool) {
+    switch character {
+        case ";", "/n":
+            return true
+        default:
+            return false
+    }
 }
 
 func restoreSystem(directory string, testFile string) (error) {
