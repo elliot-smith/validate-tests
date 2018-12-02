@@ -26,6 +26,13 @@ func main() {
 
     fmt.Println("Tests passed")
     fmt.Println(directory + testFile)
+
+    err = restoreSystem(directory, testFile)
+
+    if ( err != nil) {
+        fmt.Println("Could not restore the system to it's former state")
+        os.Exit(1)
+    }
 }
 
 func readAndBackupFile(directory string, testFile string) (string, error) {
@@ -46,6 +53,32 @@ func readAndBackupFile(directory string, testFile string) (string, error) {
     }
 
     return string(filesText), nil
+}
+
+func restoreSystem(directory string, testFile string) (error) {
+    fileNameAndDirectory := directory + "/" + testFile
+    filesText, err := ioutil.ReadFile(fileNameAndDirectory + ".backup")
+
+    if (err != nil) {
+        fmt.Println("Unable to read the backup file" + fileNameAndDirectory + ".backup")
+        return fmt.Errorf("Unable to read the file")
+    }
+
+    err = ioutil.WriteFile(fileNameAndDirectory, filesText, 0644)
+
+    if (err != nil) {
+        fmt.Println("Unable to overwrite the original file" + fileNameAndDirectory)
+        return fmt.Errorf("Unable to create the backup file")
+    }
+
+    err = os.Remove(fileNameAndDirectory + ".backup")
+
+    if (err != nil) {
+        fmt.Println("Unable to delete the backup file" + fileNameAndDirectory + ".backup")
+        return fmt.Errorf("Unable to create the delete file")
+    }
+
+    return nil
 }
 
 func runTests(testCommand string, directory string) (string, error) {
