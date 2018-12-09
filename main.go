@@ -25,16 +25,13 @@ func main() {
     fmt.Println(filesText)
 
 
-    err = validateTests(filesText)
+    err = validateTests(testFile, testCommand, directory, filesText)
 
     if ( err != nil) {
         // TODO fix the following error
         fmt.Println("The following error occurred while trying to validate the tests: ")
         os.Exit(1)
     }
-
-    fmt.Println("Tests passed")
-    fmt.Println(directory + testFile)
 
     err = restoreSystem(directory, testFile)
 
@@ -61,11 +58,14 @@ func readAndBackupFile(directory string, testFile string) (string, error) {
         return "", fmt.Errorf("Unable to create the backup file")
     }
 
-    return string(filesText), nil
+    fileString := strings.Replace(string(filesText), `\n`, "\n", -1)
+
+    return fileString, nil
 }
 
-func validateTests(filesText string) (error) {
-    err := parseAndValidateTestFile("", filesText)
+func validateTests(testFile string, testCommand string, directory string, filesText string) (error) {
+    fileNameAndDirectory := directory + "/" + testFile
+    err := parseAndValidateTestFile(fileNameAndDirectory, testCommand, directory, "", filesText)
 
     if (err != nil) {
         return err
@@ -74,13 +74,22 @@ func validateTests(filesText string) (error) {
     return nil
 }
 
-func parseAndValidateTestFile(parsedText string, remainingText string) (error) {
+func parseAndValidateTestFile(fileNameAndDirectory string, testCommand string, directory string, parsedText string, remainingText string) (error) {
     newRemainingText, nextStatement := getNextStatement(remainingText)
 
-    fmt.Println(nextStatement)
+    testPercent := (len(parsedText) * 100) / (len(parsedText) + len(remainingText))
+    fmt.Println("Parsed through %d of file", testPercent)
 
     if(newRemainingText != "") {
-        parseAndValidateTestFile(parsedText + nextStatement, newRemainingText)
+
+        err := ioutil.WriteFile(fileNameAndDirectory, []byte(parsedText + newRemainingText), 0644)
+        _, err = runTests(testCommand, directory)
+
+        if ( err == nil ) {
+            fmt.Println("Tests passed with the following deleted line %s", nextStatement)
+        }
+
+        parseAndValidateTestFile(fileNameAndDirectory, testCommand, directory, parsedText + nextStatement, newRemainingText)
     }
 
     return nil
@@ -95,22 +104,33 @@ func getNextStatementRecursive (remainingText string, nextStatement string) (str
         return remainingText, ""
     }
 
-    nextCharacter := remainingText[:1]
+    isTerminatingCharacters, terminatingCharacters := isTerminatingCharacterSet(remainingText)
 
-    if(isTerminatingCharacter(nextCharacter) || nextCharacter == "") {
-        return remainingText[1:], nextStatement + nextCharacter
+    if(isTerminatingCharacters) {
+        return remainingText[len(terminatingCharacters):], nextStatement + terminatingCharacters
     }
 
-    return getNextStatementRecursive(remainingText[1:], nextStatement + nextCharacter)
+    fmt.Println(nextStatement, terminatingCharacters)
+
+    return getNextStatementRecursive(remainingText[len(terminatingCharacters):], nextStatement + terminatingCharacters)
 }
 
-func isTerminatingCharacter (character string) (bool) {
-    switch character {
-        case ";", "/n":
-            return true
-        default:
-            return false
+func isTerminatingCharacterSet (remainingText string) (bool, string) {
+    terminatingString := ""
+    switch remainingText[:1] {
+        case ";":
+            terminatingString = ";"
+        case "/":
+            switch remainingText[1:2] {
+                case "n":
+                    terminatingString = "/n"
+            }
     }
+
+    if (terminatingString == "") {
+       return false, remainingText[:1]
+    }
+    return true, terminatingString
 }
 
 func restoreSystem(directory string, testFile string) (error) {
