@@ -120,7 +120,7 @@ func isTerminatingCharacterSet (remainingText string) (bool, string) {
     switch remainingText[:1] {
         case ";":
             terminatingString = ";"
-        case "/":
+        case "\":
             switch remainingText[1:2] {
                 case "n":
                     terminatingString = "/n"
