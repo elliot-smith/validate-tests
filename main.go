@@ -78,7 +78,8 @@ func parseAndValidateTestFile(fileNameAndDirectory string, testCommand string, d
     newRemainingText, nextStatement := getNextStatement(remainingText)
 
     testPercent := (len(parsedText) * 100) / (len(parsedText) + len(remainingText))
-    fmt.Println("Parsed through %d of file", testPercent)
+    // TODO Identify why %v or %#v doesn't work below...
+    fmt.Println("Parsed through %#v of file", testPercent)
 
     if(newRemainingText != "") {
 
@@ -86,7 +87,7 @@ func parseAndValidateTestFile(fileNameAndDirectory string, testCommand string, d
         _, err = runTests(testCommand, directory)
 
         if ( err == nil ) {
-            fmt.Println("Tests passed with the following deleted line %s", nextStatement)
+            fmt.Println("Tests passed with the following deleted line %#v", nextStatement)
         }
 
         parseAndValidateTestFile(fileNameAndDirectory, testCommand, directory, parsedText + nextStatement, newRemainingText)
@@ -96,41 +97,21 @@ func parseAndValidateTestFile(fileNameAndDirectory string, testCommand string, d
 }
 
 func getNextStatement (remainingText string) (string, string) {
-    return getNextStatementRecursive(remainingText, "")
-}
+    isNextStatement := false
+    for index, character := range remainingText {
+        switch character {
+            case ';':
+                isNextStatement = true
+            case '\n':
+                isNextStatement = true
+        }
 
-func getNextStatementRecursive (remainingText string, nextStatement string) (string, string) {
-    if (remainingText == "") {
-        return remainingText, ""
+        if (isNextStatement == true) {
+            return remainingText[index+1:], remainingText[:index+1]
+        }
     }
 
-    isTerminatingCharacters, terminatingCharacters := isTerminatingCharacterSet(remainingText)
-
-    if(isTerminatingCharacters) {
-        return remainingText[len(terminatingCharacters):], nextStatement + terminatingCharacters
-    }
-
-    fmt.Println(nextStatement, terminatingCharacters)
-
-    return getNextStatementRecursive(remainingText[len(terminatingCharacters):], nextStatement + terminatingCharacters)
-}
-
-func isTerminatingCharacterSet (remainingText string) (bool, string) {
-    terminatingString := ""
-    switch remainingText[:1] {
-        case ";":
-            terminatingString = ";"
-        case "/":
-            switch remainingText[1:2] {
-                case "n":
-                    terminatingString = "/n"
-            }
-    }
-
-    if (terminatingString == "") {
-       return false, remainingText[:1]
-    }
-    return true, terminatingString
+    return "", remainingText
 }
 
 func restoreSystem(directory string, testFile string) (error) {
