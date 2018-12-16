@@ -76,6 +76,7 @@ func validateTests(testFile string, testCommand string, directory string, filesT
 
 func parseAndValidateTestFile(fileNameAndDirectory string, testCommand string, directory string, parsedText string, remainingText string) (error) {
     newRemainingText, nextStatement := getNextStatement(remainingText)
+    fmt.Println(nextStatement)
 
     testPercent := (len(parsedText) * 100) / (len(parsedText) + len(remainingText))
     // TODO Identify why %v or %#v doesn't work below...
@@ -98,17 +99,25 @@ func parseAndValidateTestFile(fileNameAndDirectory string, testCommand string, d
 
 func getNextStatement (remainingText string) (string, string) {
     isNextStatement := false
+    isValidStatement := false
     for index, character := range remainingText {
         switch character {
             case ';':
-                isNextStatement = true
             case '\n':
                 isNextStatement = true
+                break
+            case ' ':
+            case '\r':
+                break
+            default:
+                isValidStatement = true
         }
 
-        if (isNextStatement == true) {
+        if (isNextStatement == true && isValidStatement == true) {
             return remainingText[index+1:], remainingText[:index+1]
         }
+
+        isNextStatement = false
     }
 
     return "", remainingText
