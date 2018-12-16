@@ -6,12 +6,23 @@ import (
     "os/exec"
     "os"
     "io/ioutil"
+    "path/filepath"
 )
 
 func main() {
     testCommand := os.Args[1]
     directory := os.Args[2]
-    testFile := os.Args[3]
+    testFilePattern := os.Args[3]
+
+    matches, error := filepath.Glob(directory + "/" + testFilePattern)
+    if ( error != nil || len(matches) == 0 ) {
+        fmt.Println("An error occurred trying to find any files with the pattern", testFilePattern)
+        os.Exit(1)
+    }
+
+    fmt.Println(matches)
+
+    testFile := matches[0]
 
     // Validate that the tests can run successfully
     _, err := runTests(testCommand, directory)
@@ -20,7 +31,7 @@ func main() {
         os.Exit(1)
     }
 
-    filesText, err := readAndBackupFile(directory, testFile)
+    filesText, err := readAndBackupFile(testFile)
 
     fmt.Println(filesText)
 
@@ -33,7 +44,7 @@ func main() {
         os.Exit(1)
     }
 
-    err = restoreSystem(directory, testFile)
+    err = restoreSystem(testFile)
 
     if ( err != nil) {
         fmt.Println("Could not restore the system to it's former state")
@@ -41,8 +52,7 @@ func main() {
     }
 }
 
-func readAndBackupFile(directory string, testFile string) (string, error) {
-    fileNameAndDirectory := directory + "/" + testFile
+func readAndBackupFile(fileNameAndDirectory string) (string, error) {
     filesText, err := ioutil.ReadFile(fileNameAndDirectory)
 
     if (err != nil) {
@@ -123,8 +133,7 @@ func getNextStatement (remainingText string) (string, string) {
     return "", remainingText
 }
 
-func restoreSystem(directory string, testFile string) (error) {
-    fileNameAndDirectory := directory + "/" + testFile
+func restoreSystem(fileNameAndDirectory string) (error) {
     filesText, err := ioutil.ReadFile(fileNameAndDirectory + ".backup")
 
     if (err != nil) {
