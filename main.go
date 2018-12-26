@@ -7,6 +7,8 @@ import (
     "os"
     "io/ioutil"
     "path/filepath"
+	"math/rand"
+	"time"
 )
 
 func main() {
@@ -20,9 +22,13 @@ func main() {
         os.Exit(1)
     }
 
-    fmt.Println(matches)
+    fmt.Println("The matches are: ", matches)
 
-    testFile := matches[0]
+
+    randomSeed := rand.NewSource(time.Now().UnixNano())
+    randomGenerator := rand.New(randomSeed)
+
+    testFile := matches[randomGenerator.Intn(len(matches))]
 
     // Validate that the tests can run successfully
     _, err := runTests(testCommand, directory)
@@ -73,8 +79,7 @@ func readAndBackupFile(fileNameAndDirectory string) (string, error) {
     return fileString, nil
 }
 
-func validateTests(testFile string, testCommand string, directory string, filesText string) (error) {
-    fileNameAndDirectory := directory + "/" + testFile
+func validateTests(fileNameAndDirectory string, testCommand string, directory string, filesText string) (error) {
     err := parseAndValidateTestFile(fileNameAndDirectory, testCommand, directory, "", filesText)
 
     if (err != nil) {
@@ -86,22 +91,26 @@ func validateTests(testFile string, testCommand string, directory string, filesT
 
 func parseAndValidateTestFile(fileNameAndDirectory string, testCommand string, directory string, parsedText string, remainingText string) (error) {
     newRemainingText, nextStatement := getNextStatement(remainingText)
-    fmt.Println(nextStatement)
 
     testPercent := (len(parsedText) * 100) / (len(parsedText) + len(remainingText))
     // TODO Identify why %v or %#v doesn't work below...
     fmt.Println("Parsed through %#v of file", testPercent)
 
-    if(newRemainingText != "") {
 
-        err := ioutil.WriteFile(fileNameAndDirectory, []byte(parsedText + newRemainingText), 0644)
+    err := ioutil.WriteFile(fileNameAndDirectory, []byte(parsedText + newRemainingText), 0444)
+
+    if ( err != nil ) {
+        fmt.Println("Error overwriting the file", err)
+    } else {
         _, err = runTests(testCommand, directory)
 
         if ( err == nil ) {
             fmt.Println("Tests passed with the following deleted line %#v", nextStatement)
         }
+    }
 
-        parseAndValidateTestFile(fileNameAndDirectory, testCommand, directory, parsedText + nextStatement, newRemainingText)
+    if(newRemainingText != "") {
+        return parseAndValidateTestFile(fileNameAndDirectory, testCommand, directory, parsedText + nextStatement, newRemainingText)
     }
 
     return nil
