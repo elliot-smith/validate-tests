@@ -21,5 +21,5 @@ function testGlobalValues() {
 ```
 
 ## Commands
-validate-tests.exe "INSERT_TEST_COMMAND" "INSERT_TEST_DIRECTORY_HERE" "INSERT_TEST_FILE_HERE"
-go build && validate-tests.exe "npm run test" "F:/Developer/workspace/example-typescript-nyc-mocha-coverage" "calculator/ts/src/add.ts"
+validate-tests.exe "INSERT_TEST_COMMAND" "INSERT_TEST_DIRECTORY_HERE" "INSERT_TEST_FILE_HERE" "TEXT_TO_REPLACE_FOR_TEST_ISOLATION" "REPLACE_TEXT_FOR_TEST_ISOLATION" "TEST_FILE_ENDING"
+go build && validate-tests.exe "npm run test" "F:/Developer/workspace/example-typescript-nyc-mocha-coverage" "calculator/ts/src/add.ts" "describe(" "describe.only(" ".test.ts"

@@ -15,6 +15,9 @@ func main() {
     testCommand := os.Args[1]
     directory := os.Args[2]
     testFilePattern := os.Args[3]
+    testFileOriginalText := os.Args[4]
+    testFileReplaceText := os.Args[5]
+    endTestExtension := os.Args[6]
 
     matches, error := filepath.Glob(directory + "/" + testFilePattern)
     if ( error != nil || len(matches) == 0 ) {
@@ -32,12 +35,14 @@ func main() {
 
     validateCurrentCode(testCommand, directory)
 
-    filesText, err := readAndBackupFile(testFile)
+    backupAndUpdateTestFile(testFile, endTestExtension, testFileOriginalText, testFileReplaceText)
+
+    filesText := readAndBackupFile(testFile)
 
     fmt.Println(filesText)
 
 
-    err = validateTests(testFile, testCommand, directory, filesText)
+    err := validateTests(testFile, testCommand, directory, filesText)
 
     if ( err != nil) {
         // TODO fix the following error
@@ -61,25 +66,40 @@ func validateCurrentCode(testCommand string, directory string) {
     }
 }
 
-func readAndBackupFile(fileNameAndDirectory string) (string, error) {
+func backupAndUpdateTestFile(fileNameAndDirectory string, endTestExtension string, testFileOriginalText string, testFileReplaceText string) () {
+    testFileAndDirectory := fileNameAndDirectory[:strings.LastIndex(fileNameAndDirectory, ".")] + endTestExtension
+
+    filesText := readAndBackupFile(testFileAndDirectory)
+
+    filesText = strings.Replace(filesText, testFileOriginalText, testFileReplaceText, -1)
+
+    writeFileErr := ioutil.WriteFile(testFileAndDirectory, []byte(filesText), 0444)
+
+    if (writeFileErr != nil) {
+        fmt.Println("Unable to create the backup file for file" + fileNameAndDirectory)
+        os.Exit(1)
+    }
+}
+
+func readAndBackupFile(fileNameAndDirectory string) (string) {
     filesText, err := ioutil.ReadFile(fileNameAndDirectory)
 
     if (err != nil) {
         fmt.Println("Unable to read the file" + fileNameAndDirectory)
-        return "", fmt.Errorf("Unable to read the file")
+        os.Exit(1)
     }
 
     backupTestFileName := fileNameAndDirectory + ".backup"
-    writeFileErr := ioutil.WriteFile(backupTestFileName, filesText, 0644)
+    writeFileErr := ioutil.WriteFile(backupTestFileName, filesText, 0444)
 
     if (writeFileErr != nil) {
         fmt.Println("Unable to create the backup file for file" + fileNameAndDirectory)
-        return "", fmt.Errorf("Unable to create the backup file")
+        os.Exit(1)
     }
 
     fileString := strings.Replace(string(filesText), `\n`, "\n", -1)
 
-    return fileString, nil
+    return fileString
 }
 
 func validateTests(fileNameAndDirectory string, testCommand string, directory string, filesText string) (error) {
