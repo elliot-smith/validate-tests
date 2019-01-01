@@ -6,7 +6,7 @@ import (
     "os/exec"
     "os"
     "io/ioutil"
-    "path/filepath"
+    "github.com/bmatcuk/doublestar"
 	"math/rand"
 	"time"
 )
@@ -19,7 +19,7 @@ func main() {
     testFileReplaceText := os.Args[5]
     endTestExtension := os.Args[6]
 
-    matches, error := filepath.Glob(directory + "/" + testFilePattern)
+    matches, error := doublestar.Glob(directory + "/" + testFilePattern)
     if ( error != nil || len(matches) == 0 ) {
         fmt.Println("An error occurred trying to find any files with the pattern", testFilePattern)
         os.Exit(1)
