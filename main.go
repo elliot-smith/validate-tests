@@ -30,12 +30,7 @@ func main() {
 
     testFile := matches[randomGenerator.Intn(len(matches))]
 
-    // Validate that the tests can run successfully
-    _, err := runTests(testCommand, directory)
-    if ( err != nil) {
-        fmt.Println("Tests did not pass without deleted lines")
-        os.Exit(1)
-    }
+    validateCurrentCode(testCommand, directory)
 
     filesText, err := readAndBackupFile(testFile)
 
@@ -54,6 +49,14 @@ func main() {
 
     if ( err != nil) {
         fmt.Println("Could not restore the system to it's former state")
+        os.Exit(1)
+    }
+}
+
+func validateCurrentCode(testCommand string, directory string) {
+    _, err := runTests(testCommand, directory)
+    if ( err != nil) {
+        fmt.Println("Tests did not pass without deleted lines")
         os.Exit(1)
     }
 }
