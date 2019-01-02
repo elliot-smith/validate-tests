@@ -30,19 +30,14 @@ func main() {
 
     randomSeed := rand.NewSource(time.Now().UnixNano())
     randomGenerator := rand.New(randomSeed)
-
     testFile := matches[randomGenerator.Intn(len(matches))]
 
-    validateCurrentCode(testCommand, directory)
-
     backupAndUpdateTestFile(testFile, endTestExtension, testFileOriginalText, testFileReplaceText)
+    validateCurrentCode(&testCommand, &directory)
 
-    filesText := readAndBackupFile(testFile)
+    filesText := readAndBackupFile(&testFile)
 
-    fmt.Println(filesText)
-
-
-    err := validateTests(testFile, testCommand, directory, filesText)
+    err := validateTests(&testFile, &testCommand, &directory, &filesText)
 
     if ( err != nil) {
         // TODO fix the following error
@@ -50,7 +45,7 @@ func main() {
         os.Exit(1)
     }
 
-    err = restoreSystem(testFile)
+    err = restoreSystem(&testFile)
 
     if ( err != nil) {
         fmt.Println("Could not restore the system to it's former state")
@@ -58,7 +53,7 @@ func main() {
     }
 }
 
-func validateCurrentCode(testCommand string, directory string) {
+func validateCurrentCode(testCommand *string, directory *string) {
     _, err := runTests(testCommand, directory)
     if ( err != nil) {
         fmt.Println("Tests did not pass without deleted lines")
@@ -69,7 +64,7 @@ func validateCurrentCode(testCommand string, directory string) {
 func backupAndUpdateTestFile(fileNameAndDirectory string, endTestExtension string, testFileOriginalText string, testFileReplaceText string) () {
     testFileAndDirectory := fileNameAndDirectory[:strings.LastIndex(fileNameAndDirectory, ".")] + endTestExtension
 
-    filesText := readAndBackupFile(testFileAndDirectory)
+    filesText := readAndBackupFile(&testFileAndDirectory)
 
     filesText = strings.Replace(filesText, testFileOriginalText, testFileReplaceText, -1)
 
@@ -81,19 +76,19 @@ func backupAndUpdateTestFile(fileNameAndDirectory string, endTestExtension strin
     }
 }
 
-func readAndBackupFile(fileNameAndDirectory string) (string) {
-    filesText, err := ioutil.ReadFile(fileNameAndDirectory)
+func readAndBackupFile(fileNameAndDirectory *string) (string) {
+    filesText, err := ioutil.ReadFile(*fileNameAndDirectory)
 
     if (err != nil) {
-        fmt.Println("Unable to read the file" + fileNameAndDirectory)
+        fmt.Println("Unable to read the file" + *fileNameAndDirectory)
         os.Exit(1)
     }
 
-    backupTestFileName := fileNameAndDirectory + ".backup"
+    backupTestFileName := *fileNameAndDirectory + ".backup"
     writeFileErr := ioutil.WriteFile(backupTestFileName, filesText, 0444)
 
     if (writeFileErr != nil) {
-        fmt.Println("Unable to create the backup file for file" + fileNameAndDirectory)
+        fmt.Println("Unable to create the backup file for file" + *fileNameAndDirectory)
         os.Exit(1)
     }
 
@@ -102,8 +97,8 @@ func readAndBackupFile(fileNameAndDirectory string) (string) {
     return fileString
 }
 
-func validateTests(fileNameAndDirectory string, testCommand string, directory string, filesText string) (error) {
-    err := parseAndValidateTestFile(fileNameAndDirectory, testCommand, directory, "", filesText)
+func validateTests(fileNameAndDirectory *string, testCommand *string, directory *string, filesText *string) (error) {
+    err := parseAndValidateTestFile(fileNameAndDirectory, testCommand, directory, "", *filesText)
 
     if (err != nil) {
         return err
@@ -112,7 +107,7 @@ func validateTests(fileNameAndDirectory string, testCommand string, directory st
     return nil
 }
 
-func parseAndValidateTestFile(fileNameAndDirectory string, testCommand string, directory string, parsedText string, remainingText string) (error) {
+func parseAndValidateTestFile(fileNameAndDirectory *string, testCommand *string, directory *string, parsedText string, remainingText string) (error) {
     newRemainingText, nextStatement := getNextStatement(remainingText)
 
     testPercent := (len(parsedText) * 100) / (len(parsedText) + len(remainingText))
@@ -120,7 +115,7 @@ func parseAndValidateTestFile(fileNameAndDirectory string, testCommand string, d
     fmt.Println("Parsed through %#v of file", testPercent)
 
 
-    err := ioutil.WriteFile(fileNameAndDirectory, []byte(parsedText + newRemainingText), 0444)
+    err := ioutil.WriteFile(*fileNameAndDirectory, []byte(parsedText + newRemainingText), 0444)
 
     if ( err != nil ) {
         fmt.Println("Error overwriting the file", err)
@@ -165,36 +160,36 @@ func getNextStatement (remainingText string) (string, string) {
     return "", remainingText
 }
 
-func restoreSystem(fileNameAndDirectory string) (error) {
-    filesText, err := ioutil.ReadFile(fileNameAndDirectory + ".backup")
+func restoreSystem(fileNameAndDirectory *string) (error) {
+    filesText, err := ioutil.ReadFile(*fileNameAndDirectory + ".backup")
 
     if (err != nil) {
-        fmt.Println("Unable to read the backup file" + fileNameAndDirectory + ".backup")
+        fmt.Println("Unable to read the backup file" + *fileNameAndDirectory + ".backup")
         return fmt.Errorf("Unable to read the file")
     }
 
-    err = ioutil.WriteFile(fileNameAndDirectory, filesText, 0644)
+    err = ioutil.WriteFile(*fileNameAndDirectory, filesText, 0644)
 
     if (err != nil) {
-        fmt.Println("Unable to overwrite the original file" + fileNameAndDirectory)
+        fmt.Println("Unable to overwrite the original file" + *fileNameAndDirectory)
         return fmt.Errorf("Unable to create the backup file")
     }
 
-    err = os.Remove(fileNameAndDirectory + ".backup")
+    err = os.Remove(*fileNameAndDirectory + ".backup")
 
     if (err != nil) {
-        fmt.Println("Unable to delete the backup file" + fileNameAndDirectory + ".backup")
+        fmt.Println("Unable to delete the backup file" + *fileNameAndDirectory + ".backup")
         return fmt.Errorf("Unable to create the delete file")
     }
 
     return nil
 }
 
-func runTests(testCommand string, directory string) (string, error) {
-    splitTestCommand := strings.Split(testCommand, " ")
+func runTests(testCommand *string, directory *string) (string, error) {
+    splitTestCommand := strings.Split(*testCommand, " ")
     cmd := exec.Command(splitTestCommand[0])
     cmd.Args = splitTestCommand
-    cmd.Dir = directory
+    cmd.Dir = *directory
     out, error := cmd.Output()
     return string(out), error
 }
