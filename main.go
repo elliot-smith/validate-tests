@@ -30,14 +30,17 @@ func main() {
 
     randomSeed := rand.NewSource(time.Now().UnixNano())
     randomGenerator := rand.New(randomSeed)
-    testFile := matches[randomGenerator.Intn(len(matches))]
+    fileUnderTest := matches[randomGenerator.Intn(len(matches))]
+    fmt.Println("The following file was chosen", fileUnderTest)
 
-    backupAndUpdateTestFile(testFile, endTestExtension, testFileOriginalText, testFileReplaceText)
+    associatedTestFile := getIsolatedTestFile(fileUnderTest, &endTestExtension)
+
+    backupAndUpdateTestFile(&associatedTestFile, &testFileOriginalText, &testFileReplaceText)
     validateCurrentCode(&testCommand, &directory)
 
-    filesText := readAndBackupFile(&testFile)
+    filesText := readAndBackupFile(&fileUnderTest)
 
-    err := validateTests(&testFile, &testCommand, &directory, &filesText)
+    err := validateTests(&fileUnderTest, &testCommand, &directory, &filesText)
 
     if ( err != nil) {
         // TODO fix the following error
@@ -45,11 +48,16 @@ func main() {
         os.Exit(1)
     }
 
-    err = restoreSystem(&testFile)
+    err = restoreSystem(&fileUnderTest)
 
     if ( err != nil) {
-        fmt.Println("Could not restore the system to it's former state")
-        os.Exit(1)
+        fmt.Println("Could not restore the original file to it's former state")
+    }
+
+    err = restoreSystem(&associatedTestFile)
+
+    if ( err != nil) {
+        fmt.Println("Could not restore the test file to it's former state")
     }
 }
 
@@ -61,17 +69,19 @@ func validateCurrentCode(testCommand *string, directory *string) {
     }
 }
 
-func backupAndUpdateTestFile(fileNameAndDirectory string, endTestExtension string, testFileOriginalText string, testFileReplaceText string) () {
-    testFileAndDirectory := fileNameAndDirectory[:strings.LastIndex(fileNameAndDirectory, ".")] + endTestExtension
+func getIsolatedTestFile(fileNameAndDirectory string, endTestExtension *string) (string) {
+    return fileNameAndDirectory[:strings.LastIndex(fileNameAndDirectory, ".")] + *endTestExtension
+}
 
-    filesText := readAndBackupFile(&testFileAndDirectory)
+func backupAndUpdateTestFile(associatedTestFile *string, testFileOriginalText *string, testFileReplaceText *string) () {
+    filesText := readAndBackupFile(associatedTestFile)
 
-    filesText = strings.Replace(filesText, testFileOriginalText, testFileReplaceText, -1)
+    filesText = strings.Replace(filesText, *testFileOriginalText, *testFileReplaceText, -1)
 
-    writeFileErr := ioutil.WriteFile(testFileAndDirectory, []byte(filesText), 0444)
+    writeFileErr := ioutil.WriteFile(*associatedTestFile, []byte(filesText), 0444)
 
     if (writeFileErr != nil) {
-        fmt.Println("Unable to create the backup file for file" + fileNameAndDirectory)
+        fmt.Println("Unable to create the backup file for file" + *associatedTestFile)
         os.Exit(1)
     }
 }
