@@ -20,13 +20,17 @@ func main() {
     endTestExtension := os.Args[6]
 
     matches, error := doublestar.Glob(directory + "/" + testFilePattern)
-    if ( error != nil || len(matches) == 0 ) {
-        fmt.Println("An error occurred trying to find any files with the pattern", testFilePattern)
+    if ( error != nil ) {
+        fmt.Println("An error occurred trying to find any files with the pattern", testFilePattern, error)
+        os.Exit(1)
+    }
+    if ( len(matches) == 0 ) {
+        fmt.Println("No files found with the pattern", testFilePattern)
         os.Exit(1)
     }
 
+    matches = filterExtension(matches, notTestFile, endTestExtension)
     fmt.Println("The matches are: ", matches)
-
 
     randomSeed := rand.NewSource(time.Now().UnixNano())
     randomGenerator := rand.New(randomSeed)
@@ -34,6 +38,16 @@ func main() {
     fmt.Println("The following file was chosen", fileUnderTest)
 
     associatedTestFile := getIsolatedTestFile(fileUnderTest, &endTestExtension)
+
+    testMatches, error := doublestar.Glob(associatedTestFile)
+    if ( error != nil ) {
+        fmt.Println("An error occurred trying to the associated test file at path", testFilePattern, error)
+        os.Exit(1)
+    }
+    if ( len(testMatches) == 0 ) {
+        fmt.Println("No test file at path", associatedTestFile)
+        os.Exit(1)
+    }
 
     backupAndUpdateTestFile(&associatedTestFile, &testFileOriginalText, &testFileReplaceText)
     validateCurrentCode(&testCommand, &directory)
@@ -59,6 +73,21 @@ func main() {
     if ( err != nil) {
         fmt.Println("Could not restore the test file to it's former state")
     }
+}
+
+// https://gobyexample.com/collection-functions
+func filterExtension(vs []string, f func(string, string) bool, testExtension string) []string {
+    vsf := make([]string, 0)
+    for _, v := range vs {
+        if f(v, testExtension) {
+            vsf = append(vsf, v)
+        }
+    }
+    return vsf
+}
+
+func notTestFile(input string, testEnding string) bool {
+    return !strings.HasSuffix(input, testEnding)
 }
 
 func validateCurrentCode(testCommand *string, directory *string) {
