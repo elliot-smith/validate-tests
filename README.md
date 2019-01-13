@@ -11,7 +11,7 @@ let secondGlobalValue = 7
 
 function newGlobalValues(newValue1, newValue2) {
     globalValue = newValue1
-    secondGlobalValue = Value2
+    secondGlobalValue = newValue2
 } 
 
 function testGlobalValues() {
