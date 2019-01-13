@@ -23,3 +23,13 @@ function testGlobalValues() {
 ## Commands
 validate-tests.exe "INSERT_TEST_COMMAND" "INSERT_TEST_DIRECTORY_HERE" "INSERT_TEST_FILE_HERE" "TEXT_TO_REPLACE_FOR_TEST_ISOLATION" "REPLACE_TEXT_FOR_TEST_ISOLATION" "TEST_FILE_ENDING"
 go build && validate-tests.exe "npm run test" "F:/Developer/workspace/example-typescript-nyc-mocha-coverage" "src/**/add.ts" "describe(" "describe.only(" ".test.ts"
+
+
+Argument Name | Description
+--- | ---
+"INSERT_TEST_COMMAND" | The command that tests your code. This could be `npm run test` or `mvn clean package` for example
+"INSERT_TEST_DIRECTORY_HERE" | The directory that your project sits in. This can either be relative to the validate-test file on your machine or the absolute path
+"INSERT_TEST_FILE_HERE" | The regex that will be used to determine all files that you would like tested.
+"TEXT_TO_REPLACE_FOR_TEST_ISOLATION" | A string in tests files that can be modified to isolate tests to that file
+"REPLACE_TEXT_FOR_TEST_ISOLATION" | A string to put in the test file (over the one above) to isolate the tests
+"TEST_FILE_ENDING" | The ending to all of your test files (i.e. "spec.js", "test.js").
